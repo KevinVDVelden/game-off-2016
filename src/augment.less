@@ -1,0 +1,55 @@
+@ROOM_HEIGHT: 250px;
+@ROOM_WIDTH: 200px;
+
+@ROOM_CEILING_HEIGHT: 40px;
+@ROOM_FLOOR_HEIGHT: 60px;
+
+.base_roomtype_color( @type, @color ) {
+    .room_@{type} {
+        .room_ceiling {
+            background: lighten( @color, 5% );
+        }
+        .room_floor {
+            background: darken( @color, 10% );
+        }
+        .room_content {
+            background: @color;
+        }
+    }
+}
+.base_roomtype_color( conversion, #777 );
+.base_roomtype_color( research, #444 );
+
+body {
+    margin-top: 50px;
+}
+
+.room_level {
+    height: @ROOM_HEIGHT;
+    background: #222;
+    position: relative;
+}
+
+.room {
+    height: @ROOM_HEIGHT;
+    background: green;
+    position: absolute;
+}
+.room_ceiling {
+    height: @ROOM_CEILING_HEIGHT;
+}
+.room_floor {
+    height: @ROOM_FLOOR_HEIGHT;
+}
+.room_content {
+    height: @ROOM_HEIGHT - @ROOM_CEILING_HEIGHT - @ROOM_FLOOR_HEIGHT;
+}
+
+.build_room_sizes(@counter) when (@counter >= 0) {
+    .build_room_sizes((@counter - 1));
+
+    .room_size_@{counter} when (@counter > 0) { width: @ROOM_WIDTH * (@counter); }
+    .room_level_size_@{counter} when (@counter > 0) { width: @ROOM_WIDTH * (@counter); }
+    .room_offset_@{counter} { left: @ROOM_WIDTH * @counter; }
+}
+.build_room_sizes( 8 );
