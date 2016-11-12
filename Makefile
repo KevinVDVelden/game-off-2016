@@ -1,10 +1,10 @@
 SRC_DIR=src
 OUT_DIR=out
 
-COFFEE_SOURCE=$(shell find $(SRC_DIR) -name *.coffee)
-COFFEE_OUT=$(patsubst $(SRC_DIR)/%.coffee,$(OUT_DIR)/%.js,$(COFFEE_SOURCE))
-COFFEE_OUT_MIN=$(patsubst %.js,%.min.js,$(COFFEE_OUT))
-TARGETS+=$(COFFEE_OUT_MIN) $(COFFEE_OUT)
+JS_SOURCE=$(shell find $(SRC_DIR) -name *.js)
+JS_OUT=$(patsubst $(SRC_DIR)/%.js,$(OUT_DIR)/%.js,$(JS_SOURCE))
+JS_OUT_MIN=$(patsubst %.js,%.min.js,$(JS_OUT))
+TARGETS+=$(JS_OUT_MIN) $(JS_OUT)
 
 LESS_SOURCE=$(shell find $(SRC_DIR) -name *.less)
 LESS_OUT=$(patsubst $(SRC_DIR)/%.less,$(OUT_DIR)/%.css,$(LESS_SOURCE))
@@ -16,8 +16,9 @@ all: $(TARGETS)
 clean:
 	rm -r $(OUT_DIR)
 
-$(OUT_DIR)/%.js: $(SRC_DIR)/%.coffee
-	$(COFFEE_TRANSPILER) -c -b -m -o $(OUT_DIR) $<
+$(OUT_DIR)/%.js: $(SRC_DIR)/%.js $(dir $@)
+	@mkdir -pv $(dir $@)
+	$(JS_TRANSPILER) -s -o $@ $<
 
 %.min.js: %.js
 	cp $< $@
