@@ -1,4 +1,5 @@
-import * as model from "model/model"
+import * as model from "model/room"
+import { ASSET_LIST } from "assets"
 
 let map_room = definition => new model.BaseRoom( definition['name'], definition['decorator'], definition );
 
@@ -18,4 +19,14 @@ for (let definition of ROOM_DEFINITIONS) {
 
 let RESOURCE_RENDER_LIST = [ [ 'Unconverted', 'resource_unconverted' ], [ 'Converted', 'resource_converted' ], [ 'Metal', 'resource_metal' ] ];
 
-export { NAMED_ROOM_DEFINITIONS, RESOURCE_RENDER_LIST }
+let ASSET_GROUPS = {}
+for ( let file of ASSET_LIST ) {
+    let groupStart = file.lastIndexOf( '/' );
+    if ( groupStart == -1 ) continue;
+
+    let group = file.substr( 0, groupStart );
+    if ( ASSET_GROUPS[ group ] === undefined ) ASSET_GROUPS[ group ] = [];
+    ASSET_GROUPS[ group ][ ASSET_GROUPS[ group ].length ] = file;
+}
+
+export { NAMED_ROOM_DEFINITIONS, RESOURCE_RENDER_LIST, ASSET_LIST, ASSET_GROUPS }

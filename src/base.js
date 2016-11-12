@@ -26,6 +26,7 @@ class ViewCollection {
 
     add_view( view ) {
         this.views[ this.views.length ] = view;
+        return view;
     }
 
     clear_views( view ) {
@@ -44,5 +45,30 @@ let views = new ViewCollection()
 views.add_view( new view.room.HtmlBaseRender( $('#room_listing'), base ) );
 views.add_view( new view.ResourceRenderer( $('#resource_listing'), base ) );
 
-console.log( base );
+views.render();
+
+class CharacterRender extends view.util.HtmlRender {
+    html() {
+        let final_html = ''
+
+        for ( let file of this.model.parts ) {
+            if ( file.length == 0 ) continue;
+
+            final_html += `<img src="${file}">`
+        }
+
+        return `<div class="character">${final_html}</div>`
+    }
+}
+
+let npc = new model.character.NPCCharacter()
+console.log( npc );
+
+$('h2').after( views.add_view( new CharacterRender( $('<div></div>'), new model.character.NPCCharacter() ) ).element );
+$('h2').after( views.add_view( new CharacterRender( $('<div></div>'), new model.character.NPCCharacter() ) ).element );
+$('h2').after( views.add_view( new CharacterRender( $('<div></div>'), new model.character.NPCCharacter() ) ).element );
+$('h2').after( views.add_view( new CharacterRender( $('<div></div>'), new model.character.NPCCharacter() ) ).element );
+$('h2').after( views.add_view( new CharacterRender( $('<div></div>'), new model.character.NPCCharacter() ) ).element );
+$('h2').after( views.add_view( new CharacterRender( $('<div></div>'), new model.character.NPCCharacter() ) ).element );
+
 views.render();
