@@ -6,6 +6,9 @@
 
 .base_roomtype_color( @type, @color ) {
     .room_@{type} {
+        perspective: 200px;
+        overflow: hidden;
+
         .room_ceiling {
             background: lighten( @color, 5% );
         }
@@ -20,6 +23,25 @@
 .base_roomtype_color( conversion, #777 );
 .base_roomtype_color( research, #444 );
 
+.room_conversion {
+    .room_floor {
+        background: url('/assets/dark_wood_floor.png');
+        background-size: 64px;
+    }
+    .room_ceiling {
+        background: url('/assets/lab_ceiling.png');
+    }
+}
+.room_research {
+    .room_floor {
+        background: url('/assets/wood_floor.png');
+        background-size: 64px;
+    }
+    .room_ceiling {
+        background: url('/assets/lab_ceiling.png');
+    }
+}
+
 body {
     margin-top: 50px;
 }
@@ -32,17 +54,30 @@ body {
 
 .room {
     height: @ROOM_HEIGHT;
-    background: green;
     position: absolute;
 }
+.room_ceiling, .room_floor {
+    position: absolute;
+    z-index: 0;
+
+    width: 200%;
+    height: 200px;
+}
 .room_ceiling {
-    height: @ROOM_CEILING_HEIGHT;
+    top: -20px;
+    transform: rotateX( -75deg );
 }
 .room_floor {
-    height: @ROOM_FLOOR_HEIGHT;
+    bottom: -20px;
+    transform: rotateX( 75deg );
 }
 .room_content {
     height: @ROOM_HEIGHT - @ROOM_CEILING_HEIGHT - @ROOM_FLOOR_HEIGHT;
+    width: 100%;
+
+    position: absolute;
+    top: @ROOM_CEILING_HEIGHT;
+    z-index: 1;
 }
 
 .build_room_sizes(@counter) when (@counter >= 0) {
@@ -51,5 +86,11 @@ body {
     .room_size_@{counter} when (@counter > 0) { width: @ROOM_WIDTH * (@counter); }
     .room_level_size_@{counter} when (@counter > 0) { width: @ROOM_WIDTH * (@counter); }
     .room_offset_@{counter} { left: @ROOM_WIDTH * @counter; }
+
+    .room_offset_@{counter} {
+        .room_floor, .room_ceiling {
+            left: ( @counter + 1 ) * -70px;
+        }
+    }
 }
 .build_room_sizes( 8 );
