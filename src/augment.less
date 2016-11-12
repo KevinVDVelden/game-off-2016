@@ -1,9 +1,28 @@
+/*******************************************
+ *** Configuration
+ ******************************************/
 @ROOM_HEIGHT: 250px;
 @ROOM_WIDTH: 200px;
 
 @ROOM_CEILING_HEIGHT: 40px;
 @ROOM_FLOOR_HEIGHT: 60px;
 
+@DARK_BACKGROUND: #222;
+@DARK_BACKGROUND_TEXT: #DDD;
+
+/*******************************************
+ *** Helper mixins
+ ******************************************/
+.attention_bar() {
+    background: @DARK_BACKGROUND;
+    color: @DARK_BACKGROUND_TEXT;
+    border-radius: 5px;
+    padding: 5px;
+}
+
+/*******************************************
+ *** Room style helper
+ ******************************************/
 .base_roomtype_color( @type, @color ) {
     .room_@{type} {
         perspective: 200px;
@@ -20,6 +39,10 @@
         }
     }
 }
+
+/*******************************************
+ *** Room styles
+ ******************************************/
 .base_roomtype_color( conversion, #777 );
 .base_roomtype_color( research, #444 );
 
@@ -48,10 +71,14 @@ body {
 
 .room_level {
     height: @ROOM_HEIGHT;
+    margin: auto;
     background: #222;
     position: relative;
 }
 
+/*******************************************
+ *** Base room styling and perspective
+ ******************************************/
 .room {
     height: @ROOM_HEIGHT;
     position: absolute;
@@ -80,6 +107,9 @@ body {
     z-index: 1;
 }
 
+/*******************************************
+ *** Build different sized rooms
+ ******************************************/
 .build_room_sizes(@counter) when (@counter >= 0) {
     .build_room_sizes((@counter - 1));
 
@@ -94,3 +124,24 @@ body {
     }
 }
 .build_room_sizes( 8 );
+
+/*******************************************
+ *** Resources
+ ******************************************/
+
+#resource_listing {
+    float: right;
+    margin-top: -40px;
+    text-align: right;
+
+    ul {
+        .attention_bar();
+        list-style-type: none;
+        margin: 0;
+
+        li {
+            display: inline;
+            margin-right: 10px;
+        }
+    }
+}
