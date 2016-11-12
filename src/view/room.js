@@ -1,13 +1,50 @@
 import { HtmlRender } from 'view/util'
+import { CharacterRender } from 'view/character'
+
+class HtmlMachineRender {
+    html( machine ) {
+        machine = machine || this.model;
+
+        let final_html = `<img class="baseimage" src="${machine.base.image}">`
+
+        if ( machine.character ) final_html += new CharacterRender( null, machine.character ).html();
+        if ( machine.overlay ) final_html += `<img class="overlay" src="$[machine.overlay}">`
+
+        if ( machine.css_margin_top === undefined ) machine.css_margin_top = ( 82 + Math.random() * 30 - 15 ) | 0;
+        if ( machine.css_left === undefined ) machine.css_left = ( 100 * machine.offset + Math.random() * 20 - 10 - 14 ) | 0; //Machine images are 128px wide, but they're centered every 100, chop of 14px
+
+        return `<div style="margin-top: ${machine.css_margin_top}px; left: ${machine.css_left}px" class="machine machine_offset_${machine.offset} ${machine.base.decorators}">${final_html}</div>`
+    }
+}
 
 class HtmlRoomRender {
     html( room ) {
+        room = room || this.model;
+
+        let machine_render = new HtmlMachineRender()
+        let machine_html = ''
+
+        let last_machine = null;
+
+        for ( let index in room.machines ) {
+            let machine = room.machines[ index ];
+            if ( machine == null ) {
+                last_machine = null;
+                continue;
+            } else if ( last_machine == machine ) {
+                continue;
+            }
+
+            machine_html += machine_render.html( machine )
+        }
+
+
         return `<div class="room room_offset_${room.offset} room_size_${room.room_width} ${room.base.decorators}">
             <div class="room_ceiling">
                 &nbsp;
             </div>
             <div class="room_content">
-                &nbsp;
+                ${machine_html}
             </div>
             <div class="room_floor">
                 &nbsp;

@@ -22,6 +22,13 @@ class Base {
         }
     }
 
+    room( level, offset ) {
+        level = this.room_levels[ level ]
+        if ( level == undefined ) return null;
+
+        return level[ offset ] || null;
+    }
+
     can_modify_resource( resource, amount ) {
         if ( amount > 0 ) return true;
         current = this.resource[ resource ];

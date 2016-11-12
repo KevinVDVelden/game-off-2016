@@ -56,7 +56,6 @@ class BaseCharacter {
 class NPCCharacter extends BaseCharacter {
     constructor( ) {
         super( [ 'base', 'pants', 'clothes' ] );
-        console.log( this.parts );
 
         this.isMale = this.parts[0].indexOf( '_f' ) == -1;
         if ( this.isMale ) this.add_part( -1, 'beard' );

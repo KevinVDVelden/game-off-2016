@@ -161,3 +161,34 @@ body {
         left: 0;
     }
 }
+
+/*******************************************
+ *** Machines
+ ******************************************/
+.build_machine_offsets(@counter) when (@counter >= 0) {
+    .build_machine_offsets((@counter - 1));
+
+    .machine_offset_@{counter} {
+        position: absolute;
+    }
+}
+.build_machine_offsets( 12 );
+.machine .character {
+    position: absolute;
+    left: 48px;
+    top: 48px;
+}
+
+//Machines that need to have the character rendered *before* the image
+.conversion_chamber {
+    .character {
+        z-index: 0;
+    }
+    .baseimage {
+        z-index: 1;
+        position: absolute;
+    }
+    .overlay {
+        z-index: 2;
+    }
+}
