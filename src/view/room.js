@@ -8,7 +8,7 @@ class HtmlMachineRender {
         let final_html = `<img class="baseimage" src="${machine.base.image}">`
 
         if ( machine.character ) final_html += new CharacterRender( null, machine.character ).html();
-        if ( machine.overlay ) final_html += `<img class="overlay" src="$[machine.overlay}">`
+        if ( machine.overlay ) final_html += `<img class="overlay" src="${machine.overlay}">`
 
         if ( machine.css_margin_top === undefined ) machine.css_margin_top = ( 82 + Math.random() * 30 - 15 ) | 0;
         if ( machine.css_left === undefined ) machine.css_left = ( 100 * machine.offset + Math.random() * 20 - 10 - 14 ) | 0; //Machine images are 128px wide, but they're centered every 100, chop of 14px

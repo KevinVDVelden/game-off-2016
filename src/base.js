@@ -2,6 +2,7 @@ import * as model from "model/model"
 import * as view from "view/view"
 import { NAMED_ROOM_DEFINITIONS, NAMED_MACHINE_DEFINITIONS } from 'data'
 
+/*
 let base = new model.Base();
 base.add_level( 5 );
 base.add_level( 5 );
@@ -25,7 +26,10 @@ let m2 = base.room( 0, 0 ).add_machine_raw( 1, new model.Machine( NAMED_MACHINE_
 for ( let i = 0; i < 4; i++ ) {
     let machine = base.room( 0, 2 ).add_machine_raw( i, new model.Machine( NAMED_MACHINE_DEFINITIONS[ 'conversion_chamber'] ) );
     machine.character = new model.character.NPCCharacter();
+
+    if ( i % 2 == 0 ) machine.set_active( true );
 }
+*/
 
 class ViewCollection {
     constructor() {
@@ -49,17 +53,42 @@ class ViewCollection {
     }
 };
 
-let views = new ViewCollection()
+class BaseController {
+    constructor() {
+        this.views = new ViewCollection();
+
+        this.base = new model.Base(); 
+        this.base.add_listener( e => this.on_update() );
+
+        this.room_view = this.views.add_view( new view.room.HtmlBaseRender( $('#room_listing'), this.base ) );
+        this.views.add_view( new view.ResourceRenderer( $('#resource_listing'), this.base ) );
+
+        this.base.add_level( 5 );
+        this.base.add_room_raw( 0, 0, new model.Room( NAMED_ROOM_DEFINITIONS['outside'], 1 ) );
+        this.base.add_room_raw( 0, 1, new model.Room( NAMED_ROOM_DEFINITIONS['outside_door'], 1 ) );
+        this.base.add_room_raw( 0, 2, new model.Room( NAMED_ROOM_DEFINITIONS['conversion'], 1 ) );
+
+        this.on_update();
+    }
+
+    on_update() {
+        this.views.render();
+    }
+}
+
+/*
+ * let views = new ViewCollection()
 views.add_view( new view.room.HtmlBaseRender( $('#room_listing'), base ) );
 views.add_view( new view.ResourceRenderer( $('#resource_listing'), base ) );
 
 views.render();
+*/
 
 /*
 $('h2').after( views.add_view( new view.character.CharacterRender( $('<div></div>'), new model.character.NPCCharacter() ) ).element );
 */
 
-views.render();
-window.game_base = base
-window.game_views = views
-window.game = [ base, views ]
+window.game = new BaseController();
+//window.game_base = base
+//window.game_views = views
+//window.game = [ base, views ]

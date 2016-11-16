@@ -9,6 +9,8 @@
 
 @DARK_BACKGROUND: #222;
 @DARK_BACKGROUND_TEXT: #DDD;
+@LIGHT_BACKGROUND: #888;
+@LIGHT_BACKGROUND_TEXT: #000;
 
 /*******************************************
  *** Helper mixins
@@ -19,15 +21,18 @@
     border-radius: 5px;
     padding: 5px;
 }
+.attention_bar_button() {
+    background: @LIGHT_BACKGROUND;
+    color: @LIGHT_BACKGROUND_TEXT;
+    border-radius: 5px;
+    padding: 5px;
+}
 
 /*******************************************
  *** Room style helper
  ******************************************/
 .base_roomtype_color( @type, @color ) {
     .room_@{type} {
-        perspective: 200px;
-        overflow: hidden;
-
         .room_ceiling {
             background: lighten( @color, 5% );
         }
@@ -39,30 +44,64 @@
         }
     }
 }
+.base_roomtype_perspective_sub( @which, @color, @background, @degree ) {
+    .room_@{which} when ( @degree < 0 ) and ( isstring( @background ) ) {
+        top: -20px;
+        transform: rotateX( @degree );
+    }
+    .room_@{which} when ( @degree > 0 ) and ( isstring( @background ) ) {
+        bottom: -20px;
+        transform: rotateX( @degree );
+    }
+
+    .room_@{which} when ( isstring( @background ) ) {
+        background: url( @background );
+
+        position: absolute;
+        z-index: 0;
+
+        width: 100%;
+        height: 200px;
+    }
+}
+.base_roomtype_perspective( @type, @color, @floor, @ceiling ) {
+    .base_roomtype_color( @type, @color );
+
+    .room_@{type} {
+        perspective: 200px;
+        overflow: hidden;
+
+        .base_roomtype_perspective_sub( ceiling, @color, @ceiling, -75deg );
+        .base_roomtype_perspective_sub( floor, @color, @floor, 75deg );
+
+        .room_content {
+            height: @ROOM_HEIGHT - @ROOM_CEILING_HEIGHT - @ROOM_FLOOR_HEIGHT;
+            width: 100%;
+
+            position: absolute;
+            top: @ROOM_CEILING_HEIGHT;
+            z-index: 1;
+        }
+    }
+}
 
 /*******************************************
  *** Room styles
  ******************************************/
-.base_roomtype_color( conversion, #777 );
-.base_roomtype_color( research, #444 );
+.base_roomtype_perspective( conversion, #777, '/assets/dark_wood_floor.png', '/assets/lab_ceiling.png' );
+.base_roomtype_perspective( research, #444, '/assets/wood_floor.png', '/assets/lab_ceiling.png' );
 
-.room_conversion {
-    .room_floor {
-        background: url('/assets/dark_wood_floor.png');
-        background-size: 64px;
-    }
-    .room_ceiling {
-        background: url('/assets/lab_ceiling.png');
-    }
+.base_roomtype_perspective( outside, #87CEEB, '/assets/dark_wood_floor.png', -1 );
+.base_roomtype_perspective( outside_door, #87CEEB, '/assets/dark_wood_floor.png', -1 );
+.room_outside .room_ceiling, .room_outside_door .room_ceiling {
+    background: linear-gradient( darken( #87CEEB, 10% ), #87CEEB );
 }
-.room_research {
-    .room_floor {
-        background: url('/assets/wood_floor.png');
-        background-size: 64px;
-    }
-    .room_ceiling {
-        background: url('/assets/lab_ceiling.png');
-    }
+.room_outside .room_content, .room_outside_door .room_content {
+    background: linear-gradient( #87CEEB, lighten( #87CEEB, 10% ) );
+}
+
+.room_conversion .room_floor, .room_research .room_floor, .room_outside .room_floor, .room_outside_door .room_floor {
+    background-size: 64px;
 }
 
 body {
@@ -85,26 +124,14 @@ body {
 }
 .room_ceiling, .room_floor {
     position: absolute;
-    z-index: 0;
-
-    width: 200%;
-    height: 200px;
 }
 .room_ceiling {
-    top: -20px;
-    transform: rotateX( -75deg );
-}
-.room_floor {
-    bottom: -20px;
-    transform: rotateX( 75deg );
+    height: @ROOM_CEILING_HEIGHT;
+    position: absolute;
+    width: 100%;
 }
 .room_content {
     height: @ROOM_HEIGHT - @ROOM_CEILING_HEIGHT - @ROOM_FLOOR_HEIGHT;
-    width: 100%;
-
-    position: absolute;
-    top: @ROOM_CEILING_HEIGHT;
-    z-index: 1;
 }
 
 /*******************************************
@@ -116,12 +143,6 @@ body {
     .room_size_@{counter} when (@counter > 0) { width: @ROOM_WIDTH * (@counter); }
     .room_level_size_@{counter} when (@counter > 0) { width: @ROOM_WIDTH * (@counter); }
     .room_offset_@{counter} { left: @ROOM_WIDTH * @counter; }
-
-    .room_offset_@{counter} {
-        .room_floor, .room_ceiling {
-            left: ( @counter + 1 ) * -70px;
-        }
-    }
 }
 .build_room_sizes( 8 );
 
@@ -190,5 +211,30 @@ body {
     }
     .overlay {
         z-index: 2;
+        position: absolute;
     }
+}
+
+/*******************************************
+ *** Toolbars
+ ******************************************/
+.toolbar {
+    .attention_bar();
+    position: absolute;
+
+    ul {
+        list-style-type: none;
+        margin: 0;
+        padding: 0 0 0 10px;
+
+        li {
+            display: inline;
+            margin-right: 10px;
+        }
+    }
+}
+
+.machine .toolbar {
+    top: -15px;
+    left: 20px;
 }

@@ -5,8 +5,12 @@ let map_room = definition => new model.BaseRoom( definition['name'], definition[
 let map_machine = definition => new model.BaseMachine( definition['name'], definition['image'], definition );
 
 let ROOM_DEFINITIONS_RAW = [
-    { name: "conversion", decorators: "room_conversion", min_width: 1 },
-    { name: "research", decorators: "room_research", min_width: 1 },
+    { name: "conversion", decorators: "room_conversion perspective", min_width: 1 },
+    { name: "research", decorators: "room_research perspective", min_width: 1 },
+
+    { name: "outside", decorators: "room_outside perspective_floor", min_width: 1 },
+    { name: "outside_door", decorators: "room_outside_door perspective_floor", min_width: 1 },
+
     { name: "test_1", decorators: "room_test1", min_width: 1 },
     { name: "test_2", decorators: "room_test2", min_width: 2 },
 ];

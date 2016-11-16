@@ -1,5 +1,8 @@
-class BaseRoom {
+import { Model } from "model/util"
+
+class BaseRoom extends Model {
     constructor(name, decorators, raw) {
+        super();
         this.name = name;
         this.decorators = decorators;
         this.raw = raw;
@@ -8,13 +11,14 @@ class BaseRoom {
     }
 }
 
-class Room {
+class Room extends Model {
     constructor(base, room_width) {
+        super();
         this.base = base;
         this.room_width = room_width;
         this.machines = []
 
-        for ( let i = 0; i < room_width * base.machines_per_size; i++ ) {
+        for ( let i = 0; i < room_width * this.base.machines_per_size; i++ ) {
             this.machines[i] = null;
         }
     }
@@ -24,12 +28,14 @@ class Room {
         machine.room = this;
 
         this.machines[ offset ] = machine;
+        this.call_listeners();
         return machine;
     }
 }
 
-class BaseMachine {
+class BaseMachine extends Model {
     constructor( name, image, raw ) {
+        super();
         this.name = name;
         this.image = image;
         this.raw = raw;
@@ -39,9 +45,24 @@ class BaseMachine {
     }
 }
 
-class Machine {
+class Machine extends Model {
     constructor( base ) {
+        super();
         this.base = base;
+        this.is_active = false;
+    }
+
+    set_active( is_active ) {
+        if ( this.is_active == is_active ) return;
+        this.is_active = is_active;
+
+        if ( this.is_active ) {
+            this.overlay = this.base.raw.overlay_active;
+        } else {
+            this.overlay = this.base.raw.overlay_inactive;
+        }
+
+        this.call_listeners();
     }
 }
 

@@ -1,5 +1,8 @@
-class Base {
+import { Model } from "model/util"
+
+class Base extends Model {
     constructor() {
+        super();
         this.room_levels = [];
         this.resources = {};
     }
@@ -11,15 +14,18 @@ class Base {
         }
 
         this.room_levels[ this.room_levels.length ] = level;
+        this.call_listeners();
         return level;
     }
 
     add_room_raw( level, offset, room ) {
+        console.log( 'add_room_raw', level, offset, room );
         room.offset = offset;
         level = this.room_levels[ level ];
         for ( let i = 0; i < room.room_width; i++ ) {
             level[ i + offset ] = room;
         }
+        this.call_listeners();
     }
 
     room( level, offset ) {
@@ -42,6 +48,7 @@ class Base {
             if ( this.resources[ resource ] === undefined ) this.resources[ resource ] = 0;
 
             this.resources[ resource ] += amount;
+            this.call_listeners();
             return true;
         } else {
             return false;
@@ -58,6 +65,7 @@ class Base {
 
             this.resources[ resource ] += resources[ resource ];
         }
+        this.call_listeners();
     }
 }
 
