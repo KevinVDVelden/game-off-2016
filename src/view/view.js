@@ -1,6 +1,7 @@
 import * as util from 'view/util'
 import * as room from 'view/room'
 import * as character from 'view/character'
+import * as action from 'view/action'
 
 import { RESOURCE_RENDER_LIST } from 'data'
 
@@ -24,4 +25,4 @@ class ResourceRenderer extends util.HtmlRender {
     }
 }
 
-export { room, util, character, ResourceRenderer }
+export { room, util, character, action, ResourceRenderer }

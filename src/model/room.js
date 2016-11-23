@@ -14,6 +14,8 @@ class BaseRoom extends Model {
 class Room extends Model {
     constructor(base, room_width) {
         super();
+        if ( base == null ) throw "Room constructor needs a base room";
+
         this.base = base;
         this.room_width = room_width;
         this.machines = []
@@ -23,9 +25,14 @@ class Room extends Model {
         }
     }
 
+    get_position() {
+        return [ this.offset * 200, this.level * 250 + 180 ];
+    }
+
     add_machine_raw( offset, machine ) {
-        machine.offset = offset;
+        machine.set_roomoffset( this, offset );
         machine.room = this;
+        machine.model_parent = this;
 
         this.machines[ offset ] = machine;
         this.call_listeners();
@@ -48,8 +55,26 @@ class BaseMachine extends Model {
 class Machine extends Model {
     constructor( base ) {
         super();
+        if ( base == null ) throw "Machine constructor needs a base room";
+
         this.base = base;
         this.is_active = false;
+        this.character = null;
+    }
+
+    get_position() {
+        let ret = this.room.get_position();
+        return [ ret[0] + this.centerX, ret[1] + this.centerY ];
+    }
+
+    set_roomoffset( room, offset ) {
+        this.room = room;
+        this.offset = offset;
+
+        this.centerX = ( ( 200 / this.room.base.machines_per_size ) * ( this.offset + 0.5 ) ) | 0;
+        //this.centerX += ( Math.random() * 20 - 10 ) | 0;
+        //this.centerY = ( 18 + Math.random() * 30 - 15 ) | 0;
+        this.centerY = 0;
     }
 
     set_active( is_active ) {
@@ -63,6 +88,10 @@ class Machine extends Model {
         }
 
         this.call_listeners();
+    }
+
+    set_character( character ) {
+        this.character = character;
     }
 }
 

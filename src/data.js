@@ -5,17 +5,18 @@ let map_room = definition => new model.BaseRoom( definition['name'], definition[
 let map_machine = definition => new model.BaseMachine( definition['name'], definition['image'], definition );
 
 let ROOM_DEFINITIONS_RAW = [
-    { name: "conversion", decorators: "room_conversion perspective", min_width: 1 },
-    { name: "research", decorators: "room_research perspective", min_width: 1 },
+    { name: "conversion", decorators: "room_conversion perspective", min_width: 1, floor: 'assets/dark_wood_floor.png', ceiling: '/assets/lab_ceiling.png', door: 'base_door', actions: [ 'build' ] },
+    { name: "research", decorators: "room_research perspective", min_width: 1, floor: 'assets/dark_wood_floor.png', ceiling: '/assets/lab_ceiling.png', door: 'base_door', actions: [ 'build' ] },
 
-    { name: "outside", decorators: "room_outside perspective_floor", min_width: 1 },
-    { name: "outside_door", decorators: "room_outside_door perspective_floor", min_width: 1 },
+    { name: "storage", decorators: "room_storage perspective", min_width: 1, floor: 'assets/wood_floor.png', ceiling: '/assets/lab_ceiling.png', door: 'base_door', actions: [ 'build' ] },
 
-    { name: "test_1", decorators: "room_test1", min_width: 1 },
-    { name: "test_2", decorators: "room_test2", min_width: 2 },
+
+    { name: "outside", decorators: "room_outside perspective_floor", min_width: 1, floor: 'assets/dark_wood_floor.png' },
+    { name: "outside_door", decorators: "room_outside_door perspective_floor", min_width: 1, floor: 'assets/dark_wood_floor.png' },
 ];
 let MACHINE_DEFINITIONS_RAW = [
-    { name: "conversion_chamber", image: "assets/room_elements/conversion.png", overlay_active: "assets/room_elements/conversion_active.png", decorators: 'conversion_chamber' },
+    { name: "conversion_chamber", image: "assets/room_elements/conversion.png", overlay_active: "assets/room_elements/conversion_active.png", decorators: 'conversion_chamber', build_restrictions: [ { room: 'conversion' } ], actions: [ 'fill_chamber', 'start_conversion' ], fade_overlay: true },
+    { name: "research_station", image: "assets/room_elements/research_station.png", overlay_active: "assets/room_elements/research_station_active.png", decorators: 'research_station', build_restrictions: [ { room: 'research' } ], actions: [ 'select_research' ], fade_overlay: true },
 ];
 
 
@@ -33,7 +34,7 @@ for (let definition of MACHINE_DEFINITIONS) {
     NAMED_MACHINE_DEFINITIONS[ definition.name ] = definition;
 }
 
-let RESOURCE_RENDER_LIST = [ [ 'Unconverted', 'resource_unconverted' ], [ 'Converted', 'resource_converted' ], [ 'Metal', 'resource_metal' ] ];
+let RESOURCE_RENDER_LIST = [ [ 'Unconverted', 'resource_unconverted' ], [ 'Idle drones', 'resource_idle_drones' ], [ 'Metal', 'resource_metal' ], [ 'Energy', 'resource_energy' ] ];
 
 let ASSET_GROUPS = {}
 for ( let file of ASSET_LIST ) {

@@ -7,6 +7,9 @@ class Model {
         for ( let listener of this.listeners ) {
             listener( this );
         }
+        if ( this.model_parent ) {
+            this.model_parent.call_listeners();
+        }
     }
 
     add_listener( listener ) {

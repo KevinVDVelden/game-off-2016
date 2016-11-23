@@ -12,6 +12,13 @@
 @LIGHT_BACKGROUND: #888;
 @LIGHT_BACKGROUND_TEXT: #000;
 
+@ZINDEX_BACKGROUND: 0;
+@ZINDEX_FLOOR: 10;
+@ZINDEX_DOOR: 11;
+@ZINDEX_FOREGROUND: 20;
+@ZINDEX_WALKING_CHARACTERS: 30;
+@ZINDEX_UI: 100;
+
 /*******************************************
  *** Helper mixins
  ******************************************/
@@ -44,55 +51,60 @@
         }
     }
 }
-.base_roomtype_perspective_sub( @which, @color, @background, @degree ) {
-    .room_@{which} when ( @degree < 0 ) and ( isstring( @background ) ) {
-        top: -20px;
-        transform: rotateX( @degree );
-    }
-    .room_@{which} when ( @degree > 0 ) and ( isstring( @background ) ) {
-        bottom: -20px;
-        transform: rotateX( @degree );
-    }
-
-    .room_@{which} when ( isstring( @background ) ) {
-        background: url( @background );
-
-        position: absolute;
-        z-index: 0;
-
-        width: 100%;
-        height: 200px;
+.room_part_ceiling {
+    top: 0;
+    height: @ROOM_CEILING_HEIGHT;
+    div {
+        top: -80px;
+        transform: rotateX( -70deg );
     }
 }
-.base_roomtype_perspective( @type, @color, @floor, @ceiling ) {
-    .base_roomtype_color( @type, @color );
+.room_part_floor {
+    bottom: 0;
+    height: @ROOM_FLOOR_HEIGHT;
+    div {
+        bottom: -60px;
+        transform: rotateX( 70deg );
+    }
+}
+.room_part_ceiling, .room_part_floor {
+    position: absolute;
+    display: block;
+    overflow: hidden;
+    perspective: 400px;
 
-    .room_@{type} {
-        perspective: 200px;
-        overflow: hidden;
+    div {
+        position: absolute;
+        z-index: @ZINDEX_FLOOR;
 
-        .base_roomtype_perspective_sub( ceiling, @color, @ceiling, -75deg );
-        .base_roomtype_perspective_sub( floor, @color, @floor, 75deg );
-
-        .room_content {
-            height: @ROOM_HEIGHT - @ROOM_CEILING_HEIGHT - @ROOM_FLOOR_HEIGHT;
-            width: 100%;
-
-            position: absolute;
-            top: @ROOM_CEILING_HEIGHT;
-            z-index: 1;
-        }
+        height: 200px;
+        width: 200%;
+        left: -50%;
+    }
+}
+#room_listing {
+    position: relative;
+}
+.room_door {
+    position: absolute;
+    z-index: @ZINDEX_DOOR;
+    div {
+        position: absolute;
+        left: -10px;
+        width: 20px;
+        height: @ROOM_HEIGHT;
+        background: gray;
     }
 }
 
 /*******************************************
  *** Room styles
  ******************************************/
-.base_roomtype_perspective( conversion, #777, '/assets/dark_wood_floor.png', '/assets/lab_ceiling.png' );
-.base_roomtype_perspective( research, #444, '/assets/wood_floor.png', '/assets/lab_ceiling.png' );
+.base_roomtype_color( conversion, #777, );
+.base_roomtype_color( research, #444, );
 
-.base_roomtype_perspective( outside, #87CEEB, '/assets/dark_wood_floor.png', -1 );
-.base_roomtype_perspective( outside_door, #87CEEB, '/assets/dark_wood_floor.png', -1 );
+.base_roomtype_color( outside, #87CEEB );
+.base_roomtype_color( outside_door, #87CEEB );
 .room_outside .room_ceiling, .room_outside_door .room_ceiling {
     background: linear-gradient( darken( #87CEEB, 10% ), #87CEEB );
 }
@@ -110,7 +122,6 @@ body {
 
 .room_level {
     height: @ROOM_HEIGHT;
-    margin: auto;
     background: #222;
     position: relative;
 }
@@ -122,6 +133,9 @@ body {
     height: @ROOM_HEIGHT;
     position: absolute;
 }
+.room_list {
+    position: relative;
+}
 .room_ceiling, .room_floor {
     position: absolute;
 }
@@ -131,7 +145,10 @@ body {
     width: 100%;
 }
 .room_content {
+    position: absolute;
+    top: @ROOM_CEILING_HEIGHT;
     height: @ROOM_HEIGHT - @ROOM_CEILING_HEIGHT - @ROOM_FLOOR_HEIGHT;
+    width: 100%;
 }
 
 /*******************************************
@@ -170,17 +187,26 @@ body {
 /*******************************************
  *** Characters
  ******************************************/
-.character {
+.character, .static_character {
     position: relative;
     width: 32px;
     height: 32px;
     display: inline-block;
+    transition: top 0.2s, left 0.2s;
+    transition-timing-function: linear;
 
     img {
         position: absolute;
         top: 0;
         left: 0;
     }
+}
+.character img {
+    top: -16px;
+    left: -16px;
+}
+.character {
+    z-index: @ZINDEX_WALKING_CHARACTERS;
 }
 
 /*******************************************
@@ -194,24 +220,27 @@ body {
     }
 }
 .build_machine_offsets( 12 );
-.machine .character {
+.machine .static_character {
     position: absolute;
     left: 48px;
     top: 48px;
 }
 
 //Machines that need to have the character rendered *before* the image
-.conversion_chamber {
-    .character {
-        z-index: 0;
+.machine {
+    cursor: pointer;
+
+    .static_character {
+        z-index: @ZINDEX_FOREGROUND;
     }
     .baseimage {
-        z-index: 1;
+        z-index: @ZINDEX_FOREGROUND + 1;
         position: absolute;
     }
     .overlay {
-        z-index: 2;
+        z-index: @ZINDEX_FOREGROUND + 2;
         position: absolute;
+        transition: opacity 0.2s;
     }
 }
 
@@ -237,4 +266,49 @@ body {
 .machine .toolbar {
     top: -15px;
     left: 20px;
+}
+
+.actions_list {
+    .attention_bar();
+
+    position: relative;
+    z-index: @ZINDEX_UI;
+
+    padding: 8px 12px 5px 12px;
+    .action {
+        padding-bottom: 3px;
+    }
+
+    .action_allowed:hover {
+        transition: background 0.5s;
+        background: #555;
+        cursor: pointer;
+    }
+    .action_allowed {
+        font-weight: bold;
+    }
+
+    .action_blocked {
+        color: #777;
+        font-style: italic;
+    }
+}
+/*******************************************
+ *** Story bar
+ ******************************************/
+#story_view {
+    .attention_bar();
+
+    .buttons {
+        .button {
+            display: inline-block;
+            border: 1px solid black;
+            border-radius: 10px;
+            padding: 5px 10px;
+            cursor: pointer;
+
+            background: @LIGHT_BACKGROUND;
+            color: @LIGHT_BACKGROUND_TEXT;
+        }
+    }
 }

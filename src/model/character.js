@@ -1,4 +1,5 @@
-import { ASSET_GROUPS } from 'data'
+import { ASSET_LIST, ASSET_GROUPS } from 'data'
+import { Model } from 'model/util';
 
 class PartFactory {
     constructor( name, asset_group, chance_include ) {
@@ -25,16 +26,26 @@ let part_factories = {
     'clothes': new PartFactory( 'clothes', 'assets/character/clothes', 1 ),
     'beard': new PartFactory( 'beard', 'assets/character/beard', 0.3 ),
     'hair': new PartFactory( 'hair', 'assets/character/hair', 0.9 ),
-    'hat': new PartFactory( 'hat', 'assets/character/hat', 0.2 ) }
+    'hat': new PartFactory( 'hat', 'assets/character/hat', 0.2 ),
+
+    'drone_pants': new PartFactory( 'drone_pants', 'assets/character/drone_pants', 1 ),
+}
 
 function get_part( name ) {
-    if ( part_factories[ name ] === undefined ) return null;
+    if ( part_factories[ name ] === undefined ) {
+        if ( ASSET_LIST.indexOf( name ) != -1 ) {
+            return name;
+        } else {
+            return null;
+        }
+    }
 
     return part_factories[ name ].get();
 }
 
-class BaseCharacter {
+class BaseCharacter extends Model {
     constructor( parts ) {
+        super();
         this.parts = []
         this.part_names = []
 
@@ -43,6 +54,8 @@ class BaseCharacter {
 
             this.add_part( partI, part_name );
         }
+
+        this.isMale = this.parts[0].indexOf( '_f' ) == -1;
     }
 
     add_part( partI, part_name ) {
@@ -51,13 +64,26 @@ class BaseCharacter {
         this.part_names[partI] = part_name;
         this.parts[partI] = get_part( part_name );
     }
+
+    set_position( x, y ) {
+        this.posX = x;
+        this.posY = y;
+    }
+    get_position() {
+        return [ this.posX, this.posY ];
+    }
+
+    floorY() {
+        return this.posY % 250;
+    }
 }
 
 class NPCCharacter extends BaseCharacter {
     constructor( ) {
         super( [ 'base', 'pants', 'clothes' ] );
 
-        this.isMale = this.parts[0].indexOf( '_f' ) == -1;
+        this.type = 'unconverted';
+
         if ( this.isMale ) this.add_part( -1, 'beard' );
         this.add_part( -1, 'hair' );
         this.add_part( -1, 'hat' );
@@ -65,4 +91,43 @@ class NPCCharacter extends BaseCharacter {
 
 }
 
-export { get_part, BaseCharacter, NPCCharacter }
+class BaseDrone extends BaseCharacter {
+    constructor( converted_from ) {
+        super( [ converted_from.parts[0] ] );
+        this.converted_from = converted_from;
+
+        this.type = 'drone';
+
+        if ( this.isMale ) {
+            this.add_part( -1, 'assets/character/drone_clothes/1_m.png' );
+        } else {
+            this.add_part( -1, 'assets/character/drone_clothes/1_f.png' );
+        }
+        this.add_part( -1, 'drone_pants' );
+
+        this.walkingY = ( Math.random() * 30 + 200 ) | 0;
+        this.state = null;
+    }
+
+    tick() {
+        switch ( this.state ) {
+            case null:
+                this.state = 'falling';
+                break;
+            case 'falling':
+                let delta = this.walkingY - this.floorY();
+                if ( delta > 5 ) {
+                    this.posY += 5;
+                } else if ( delta > 0 ) {
+                    this.posY += delta;
+                    console.log( delta, this.posY, this.floorY(), this.walkingY );
+                    this.state = 'idle';
+                }
+                this.call_listeners();
+                break;
+        }
+
+    }
+}
+
+export { get_part, BaseCharacter, NPCCharacter, BaseDrone }
