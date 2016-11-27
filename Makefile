@@ -37,7 +37,7 @@ $(OUT_DIR)/%.min.css: $(OUT_DIR)/%.css
 
 $(SRC_DIR)/assets.js: $(ASSETS) Makefile
 	echo 'let ASSET_LIST = [' > $@
-	find $(ASSETS_DIR) -type f | sed 's/^/\t"/' | sed 's/$$/",/' >> $@
+	find $(ASSETS_DIR) -type f | grep -v '.pdn$$' | sed 's/^/\t"/' | sed 's/$$/",/' >> $@
 	echo -e "\t"'""' >> $@
 	echo ']' >> $@
 	echo 'export { ASSET_LIST }' >> $@

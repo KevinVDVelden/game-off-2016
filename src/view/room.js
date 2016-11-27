@@ -5,17 +5,17 @@ class HtmlMachineRender extends HtmlRender {
     html() {
         let machine = this.model;
 
-        let final_html = `<img class="baseimage" src="${machine.base.image}">`
+        let final_html = `<img class="baseimage" src="${machine.data.image}">`
 
         if ( machine.character ) final_html += this.add_child( machine.character, StaticCharacterRender );
         if ( machine.overlay ) final_html += `<img class="overlay" src="${machine.overlay}">`
 
 
-        return `<div style="top: ${machine.centerY+140-64}px; left: ${machine.centerX-64}px" class="machine machine_offset_${machine.offset} ${machine.base.decorators}">${final_html}</div>`
+        return `<div style="top: ${machine.centerY+140-64}px; left: ${machine.centerX-64}px" class="machine machine_offset_${machine.offset} ${machine.data.decorators}">${final_html}</div>`
     }
 
     on_tick() {
-        if ( this.model.overlay && this.model.base.raw.fade_overlay ) {
+        if ( this.model.overlay && this.model.data.raw.fade_overlay ) {
             this.element.find('.overlay').css( 'opacity', ( Math.random() * 0.4 ) + 0.5 );
         }
     }
@@ -73,13 +73,13 @@ class HtmlRoomRender extends HtmlRender {
         }
 
 
-        let ret = `<div class="room room_offset_${this.model.offset} room_size_${this.model.room_width} ${this.model.base.decorators}">`
+        let ret = `<div class="room room_offset_${this.model.offset} room_size_${this.model.room_width} ${this.model.data.decorators}">`
 
-        if ( !this.model.base.raw.ceiling ) ret += '<div class="room_ceiling">&nbsp;</div>';
+        if ( !this.model.data.raw.ceiling ) ret += '<div class="room_ceiling">&nbsp;</div>';
 
         ret += `<div class="room_content">${machine_html}</div>`;
 
-        if ( !this.model.base.raw.floor ) ret += '<div class="room_floor">&nbsp;</div>';
+        if ( !this.model.data.raw.floor ) ret += '<div class="room_floor">&nbsp;</div>';
 
         ret += '</div>';
 
@@ -109,9 +109,9 @@ class HtmlLevelRender extends HtmlRender {
                 if (room !== last_room) {
                     final_html += this.add_child( room, HtmlRoomRender );
                 }
-                cur_door = room.base.raw.door;
-                final_html += ceiling.set( room.base.raw.ceiling ) || '';
-                final_html += floor.set( room.base.raw.floor ) || '';
+                cur_door = room.data.raw.door;
+                final_html += ceiling.set( room.data.raw.ceiling ) || '';
+                final_html += floor.set( room.data.raw.floor ) || '';
             }
 
             if ( room !== last_room ) {

@@ -41,6 +41,192 @@ class ViewCollection {
         }
     }
 };
+let SerializeConstructors = {
+    NPCCharacter: model.character.NPCCharacter,
+    BaseCharacter: model.character.BaseCharacter,
+    BaseDrone: model.character.BaseDrone,
+
+    Room: model.Room,
+    Base: model.Base,
+    Machine: model.Machine,
+
+    Story: Story,
+};
+let SerializeFunctions = {
+    BaseRoom: n => NAMED_ROOM_DEFINITIONS[ n ],
+    BaseMachine: n => NAMED_MACHINE_DEFINITIONS[ n ],
+}
+class Serialize {
+    constructor() {
+        this.count = 0;
+    }
+    serialize( walk_root, walk_store, global_store ) {
+        this.count += 1;
+        if ( this.count > 10000 ) return '##ERROR' + this.count;
+
+        let thisWalk = this.serialize.bind( this );
+        let args = [];
+        function callback( object, type, params ) {
+            if ( typeof( object ) == 'object' ) {
+                let object = arguments[0], type = arguments[1], params = arguments[2];
+                walk_store[ '__proto' ] = type;
+
+                for ( let i = 0; i < params.length; i++ ) {
+                    let param_name = params[i];
+                    if ( param_name.startsWith( '__' ) ) continue;
+
+                    walk_store[ param_name ] = thisWalk( object[ param_name ], {}, global_store );
+                }
+
+                if ( type.args ) {
+                    for ( let i = 0; i < type.args.length; i++ ) {
+                        args.push( type.args[i] );
+                    }
+                }
+            } else {
+                walk_store[ object ] = thisWalk( type, {}, global_store );
+                if ( params ) {
+                    walk_store[ '__var' + object ] = params;
+                } 
+            }
+        }
+
+        if ( walk_root == null || walk_root === undefined ) {
+            return null;
+        } else if ( walk_root.serialize ) {
+            if ( !global_store[ walk_root.__serialized_as ] ) {
+                walk_root.__serialized_as = global_store.length;
+                global_store.push( '#BUILDING#' );
+                walk_root.serialize( callback );
+
+                for ( let i = 0; i < args.length; i++ ) {
+                    let param_name = args[i];
+
+                    if ( ! walk_store[ param_name ] ) walk_store[ param_name ] = this.serialize( walk_root[ param_name ], {}, global_store );
+                }
+
+                global_store[ walk_root.__serialized_as ] = walk_store;
+            }
+            return '###REF###' + walk_root.__serialized_as;
+        } else {
+            switch ( typeof( walk_root ) ) {
+                case 'string':
+                case 'number':
+                case 'boolean':
+                    return walk_root;
+                case 'object':
+                    if ( walk_root.constructor === Array ) {
+                        walk_store[ '__proto' ] = 'array';
+                    } else {
+                        walk_store[ '__proto' ] = 'object';
+                    }
+
+                    for ( let key in walk_root ) {
+                        walk_store[ key ] = this.serialize( walk_root[ key ], {}, global_store );
+                    }
+
+                    break;
+                case "function":
+                    throw `Not serializing function "${walk_root.name}"`;
+                default:
+                    throw `Can't figure out what to do with "${walk_root}"`;
+            }
+        }
+
+        return walk_store;
+    }
+
+    do_deserialize( store, global_store, proto ) {
+        if ( store == null || store === undefined ) return store;
+        if ( store.startsWith && store.startsWith( '###REF###' ) ) {
+            let index = store.substr( 9 ) * 1;
+            if ( !global_store[ index ] ) throw "Unable to match reference " + store;
+            return global_store[ index ];
+        }
+        switch ( typeof( store ) ) {
+            case 'string':
+            case 'number':
+            case 'boolean':
+                if ( proto ) {
+                    if ( proto.construct ) return new SerializeConstructors[ proto.construct ]( store );
+                    if ( proto.func ) return SerializeFunctions[ proto.func ]( store );
+                }
+
+                return store;
+        }
+
+        let temp = {};
+        for ( let key in store ) {
+            if ( key == '__proto' || key.startsWith( '__var' ) ) continue;
+
+            if ( store[ '__var' + key ] ) {
+                temp[ key ] = this.do_deserialize( store[ key ], global_store, store[ '__var' + key ] );
+            } else {
+                temp[ key ] = this.do_deserialize( store[ key ], global_store );
+            }
+        }
+
+        if ( !proto ) proto = store['__proto'];
+        if ( !proto ) proto = typeof( store );
+
+        let ret = null;
+        switch ( proto ) {
+            case 'array': ret = []; break;
+            case 'object': ret = {}; break;
+            default:
+                let args = [null];
+                if ( proto.args ) {
+                    for ( let i = 0; i < proto.args.length; i++ ) args.push( temp[ proto.args[ i ] ] );
+                }
+
+                if ( !SerializeConstructors[ proto.construct ] ) {
+                    throw `Unable to find constructor for ${proto.construct}`;
+                } else {
+                    let construct = SerializeConstructors[ proto.construct ];
+                    let temp = construct.bind.apply( construct, args );
+                    ret = new temp();
+                }
+                break;
+        }
+
+        for ( let key in temp ) {
+            if ( key == '__proto' || ( key.startsWith && key.startsWith( '__var' ) ) ) continue;
+
+            ret[ key ] = temp[ key ];
+        }
+
+        if ( ret.post_deserialize ) {
+            ret.post_deserialize();
+        }
+
+        return ret;
+    }
+
+    deserialize( store, global_store ) {
+        let errored = true;
+        let completed = {};
+        let attempts = 0;
+
+        while ( errored ) {
+            errored = false;
+            attempts += 1;
+
+            if ( attempts == 100 ) break;
+            for ( let i = 0; i < global_store.length; i++ ) {
+                if ( completed[ i ] ) continue;
+
+                try {
+                    completed[ i ] = this.do_deserialize( global_store[ i ], completed );
+                } catch ( e ) {
+                    errored = true;
+                    if ( attempts == 99 ) console.log( e );
+                }
+            }
+        }
+
+        return this.do_deserialize( store, completed );
+    }
+};
 
 class BaseController {
     constructor() {
@@ -48,11 +234,6 @@ class BaseController {
         this.render_queued = false;
 
         this.base = new model.Base();
-        this.base.add_listener( e => this.on_update() );
-
-        this.room_view = this.views.add_view( new view.room.HtmlBaseRender( $('#room_listing'), this.base, this ) );
-        this.actions_view = null;
-        this.views.add_view( new view.ResourceRenderer( $('#resource_listing'), this.base, this ) );
 
         this.tick_elements = [];
 
@@ -66,11 +247,56 @@ class BaseController {
 
         this.base.modify_resource( 'resource_energy', 5 );
 
-        this.story = new Story( this, {} );
+        this.story = new Story( this.base, {} );
 
         this.accumulator = 0;
         $('body').click( e => this.on_click( this, e ) );
         this.on_render( 0 );
+
+        this.reload();
+
+        this.cur_save_slot = 0;
+
+        $('#save_button').click( e => this.save( 1, false ) );
+        $('#load_button').click( e => this.load( 1, false ) );
+    }
+
+    save( slot, auto ) {
+        this.cur_save_slot = slot;
+
+        let serializer = new Serialize();
+        let global = [];
+        let data = serializer.serialize( { story: this.story, base: this.base }, {}, global );
+
+        localStorage.setItem( `augmentSave_${slot}_${auto}`, JSON.stringify( [ data, global ] ) );
+    }
+    load( slot, auto ) {
+        this.cur_save_slot = slot;
+
+        let serializer = new Serialize();
+        let data = JSON.parse( localStorage.getItem( `augmentSave_${slot}_${auto}` ) );
+        let deserialized = serializer.deserialize( data[0], data[1] )
+
+        this.base = deserialized.base;
+        this.story = deserialized.story;
+
+        this.reload();
+    }
+
+
+    reload_sim() {
+        this.save( 1, true );
+        this.load( 1, true );
+
+        this.reload();
+    }
+
+    reload() {
+        this.base.add_listener( e => this.on_update() );
+
+        this.room_view = this.views.add_view( new view.room.HtmlBaseRender( $('#room_listing'), this.base, this ) );
+        this.actions_view = null;
+        this.views.add_view( new view.ResourceRenderer( $('#resource_listing'), this.base, this ) );
     }
 
     add_character( character ) {
@@ -91,10 +317,10 @@ class BaseController {
         if ( sender === null || sender === undefined ) return;
 
         let sendermodel = sender.model;
-        if ( sendermodel && sendermodel.base && sendermodel.base.raw && sendermodel.base.raw.actions ) {
+        if ( sendermodel && sendermodel.data && sendermodel.data.raw && sendermodel.data.raw.actions ) {
             let visible_actions = new model.actions.ActionListModel( sendermodel, this.base, this );
 
-            for ( let action_name of sendermodel.base.raw.actions ) {
+            for ( let action_name of sendermodel.data.raw.actions ) {
                 visible_actions.add( action_name );
             }
 
@@ -193,6 +419,7 @@ $('h2').after( views.add_view( new view.character.CharacterRender( $('<div></div
 */
 
 window.game = new BaseController();
+export { Serialize }
 //window.game_base = base
 //window.game_views = views
 //window.game = [ base, views ]

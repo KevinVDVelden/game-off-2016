@@ -3,6 +3,10 @@ class Model {
         this.listeners = [];
     }
 
+    set_parent( p ) {
+        this.model_parent = p;
+    }
+
     call_listeners() {
         for ( let listener of this.listeners ) {
             listener( this );

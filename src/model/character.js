@@ -58,11 +58,20 @@ class BaseCharacter extends Model {
         this.isMale = this.parts[0].indexOf( '_f' ) == -1;
     }
 
+    serialize( _ ) {
+        _( this, { construct: 'BaseCharacter', args: [ 'parts' ] }, [ 'posX', 'posY', 'part_names', 'isMale' ] );
+    }
+
     add_part( partI, part_name ) {
         if ( partI == -1 ) partI = this.parts.length;
 
         this.part_names[partI] = part_name;
         this.parts[partI] = get_part( part_name );
+    }
+
+    set_parent( p ) {
+        super.set_parent( p );
+        this.base = this;
     }
 
     set_position( x, y ) {
@@ -71,6 +80,10 @@ class BaseCharacter extends Model {
     }
     get_position() {
         return [ this.posX, this.posY ];
+    }
+
+    get_jobs() {
+        return [];
     }
 
     floorY() {
@@ -89,6 +102,10 @@ class NPCCharacter extends BaseCharacter {
         this.add_part( -1, 'hat' );
     }
 
+    serialize( _ ) {
+        super.serialize( _ );
+        _( this, { construct: 'NPCCharacter' }, [ 'type' ] );
+    }
 }
 
 class BaseDrone extends BaseCharacter {
@@ -109,6 +126,11 @@ class BaseDrone extends BaseCharacter {
         this.state = null;
     }
 
+    serialize( _ ) {
+        super.serialize( _ );
+        _( this, { construct: 'BaseDrone', args: [ 'converted_from' ] }, [ 'type', 'walkingY', 'state' ] );
+    }
+
     tick() {
         switch ( this.state ) {
             case null:
@@ -120,11 +142,28 @@ class BaseDrone extends BaseCharacter {
                     this.posY += 5;
                 } else if ( delta > 0 ) {
                     this.posY += delta;
-                    console.log( delta, this.posY, this.floorY(), this.walkingY );
                     this.state = 'idle';
                 }
                 this.call_listeners();
                 break;
+            case 'idle':
+                let closestJob = null;
+                let closestPath = null;
+
+                for ( let job of this.base.get_jobs() ) {
+                    console.log( job );
+                    let curPath = this.base.path( this, job );
+                    if ( closestPath == null || curPath.total_dist() < closestPath.total_dist() ) {
+                        closestPath = curPath;
+                        closestJob = job;
+                    }
+                }
+
+                if ( closestPath != null ) {
+                    this.state = 'move';
+                    this.move_target = closestPath;
+                    this.move_job = closestJob;
+                }
         }
 
     }

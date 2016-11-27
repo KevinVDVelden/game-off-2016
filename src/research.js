@@ -9,18 +9,24 @@ class Research {
         this.description = description;
         this.display_name = display_name;
 
-        this.research_at( 'research_station' );
+        this.set_research_at( 'research_station' );
         this.index = researchIndexList;
         researchIndexList++;
 
         this.requirements = [];
         this.requirements_fail = [];
 
+        this.material_cost = { 'resource_energy': -0.25 };
+
         RESEARCH_LIST[ this.name ] = this;
         RESEARCH_TREE[ this.name ] = [];
     }
 
-    research_at( name ) { this.research_at = name; return this; }
+    tick( base ) {
+        this.progress += 1;
+    }
+
+    set_research_at( name ) { this.research_at = name; return this; }
     require( list ) {
         for ( let n = 0; n < list.length; n++ ) {
             if ( typeof( list[n] ) == 'string' ) {

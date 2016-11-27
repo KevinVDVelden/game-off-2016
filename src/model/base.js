@@ -10,6 +10,60 @@ class Base extends Model {
         this.characters = [];
 
         this.finished_researches = [];
+        this.current_researches = {}
+    }
+
+    serialize( _ ) {
+        _( this, { construct: 'Base' }, [ 'room_levels', 'resources', 'characters', 'finished_researches', 'current_researches' ] );
+    }
+    post_deserialize() {
+        for ( let level = 0; level < this.room_levels.length; level++ ) {
+            let last_room = null;
+            for ( let offset = 0; offset < this.room_levels[ level ].length; offset++ ) {
+                let room = this.room_levels[ level ][ offset ];
+                if ( room && room != last_room ) {
+                    this.add_room_raw( level, offset, room );
+                }
+                last_room = room;
+            }
+        }
+
+        for ( let character of this.characters ) {
+            character.set_parent( this );
+        }
+    }
+
+    get_rooms() {
+        let ret = [];
+
+        for ( let level = 0; level < this.room_levels.length; level++ ) {
+            let last_room = null;
+            for ( let offset = 0; offset < this.room_levels[ level ].length; offset++ ) {
+                let room = this.room_levels[ level ][ offset ];
+                if ( room && room != last_room ) {
+                    ret.push( room );
+                }
+            }
+        }
+
+        return ret;
+    }
+    get_jobs() {
+        let ret = [];
+
+        for ( let room of this.get_rooms() ) {
+            for ( let job of room.get_jobs() ) {
+                ret.push( job );
+            }
+        }
+
+        for ( let character of this.characters ) {
+            for ( let job of character.get_jobs() ) {
+                ret.push( job );
+            }
+        }
+
+        return ret;
     }
 
     /***** Levels and rooms*/
@@ -35,7 +89,7 @@ class Base extends Model {
         }
         this.call_listeners();
 
-        room.model_parent = this;
+        room.set_parent( this );
         return room;
     }
 
@@ -50,8 +104,7 @@ class Base extends Model {
     add_character( character ) {
         if ( this.characters.indexOf( character ) == -1 ) {
             this.characters.push( character );
-            character.model_parent = this;
-            character.base = this;
+            character.set_parent( this );
 
             this.call_listeners();
         }

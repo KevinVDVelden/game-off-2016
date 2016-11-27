@@ -20,13 +20,13 @@ class StartConversion extends Action {
         super( 'start_conversion', 'Start conversion' );
     }
     is_allowed( sub_model, model, controller ) {
-        return sub_model.character != null && sub_model.conversion_progress === undefined;
+        return sub_model.character != null && sub_model.state.conversion_progress === undefined;
     }
 
     invoke( sub_model, model, controller ) {
         if ( ! sub_model.is_active ) {
             sub_model.set_active( true );
-            sub_model.conversion_progress = 0;
+            sub_model.state.conversion_progress = 0;
 
             return this.tick;
         }
@@ -34,16 +34,16 @@ class StartConversion extends Action {
 
     tick( sub_model, model, controller ) {
         if ( model.modify_resource( 'resource_energy', -0.1 ) ) {
-            sub_model.conversion_progress += 1;
+            sub_model.state.conversion_progress += 1;
             sub_model.call_listeners();
 
-            if ( sub_model.conversion_progress == 20 ) {
+            if ( sub_model.state.conversion_progress == 20 ) {
                 let new_character = new BaseDrone( sub_model.character );
                 let pos = sub_model.get_position();
                 new_character.set_position( pos[0], pos[1] );
                 controller.add_character( new_character );
 
-                delete sub_model.conversion_progress;
+                delete sub_model.state.conversion_progress;
                 sub_model.character = null;
                 sub_model.set_active( false );
 
@@ -57,10 +57,15 @@ class StartConversion extends Action {
 
 class SelectResearchImpl extends Action {
     constructor( research_name ) {
-        super( research_name, research.RESEARCH_LIST[research_name].display_name );
+        let my_research = research.RESEARCH_LIST[research_name];
+        super( research_name, my_research.display_name );
+        this.research = my_research;
     }
 
     invoke( sub_model, model, controller ) {
+        console.log( sub_model, model, controller );
+
+        model.current_researches[ this.research.research_at ] = this.research.name;
     }
 }
 
